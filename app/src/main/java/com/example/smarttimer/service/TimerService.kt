@@ -40,7 +40,10 @@ class TimerService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification())
+        val notification = createNotification()
+        if (notification != null) {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
     
     override fun onBind(intent: Intent): IBinder {
@@ -141,16 +144,25 @@ class TimerService : Service() {
         }
     }
     
-    private fun createNotification() = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-        .setContentTitle("Smart Timer")
-        .setContentText("${_activeTimers.value.size} active timer(s)")
-        .setSmallIcon(R.drawable.ic_timer)
-        .setOngoing(true)
-        .build()
+    private fun createNotification(): android.app.Notification? {
+        val context = applicationContext ?: return null
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setContentTitle("Smart Timer")
+            .setContentText("${_activeTimers.value.size} active timer(s)")
+            .setSmallIcon(R.drawable.ic_timer)
+            .setOngoing(true)
+            .build()
+    }
     
     private fun updateNotification() {
-        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, createNotification())
+        try {
+            val context = applicationContext ?: return
+            val notification = createNotification() ?: return
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            android.util.Log.e("TimerService", "Error updating notification", e)
+        }
     }
     
     private fun Long.ifZero(default: () -> Long): Long = if (this == 0L) default() else this
