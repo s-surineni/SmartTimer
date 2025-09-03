@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude specific files or directories from backup.
+         The full path to the directory that should be excluded from backup.
+         Note that this is a full path, not a relative path. -->
+    <!--
+    <exclude domain="sharedpref" path="."/>
+    -->
+</full-backup-content>
