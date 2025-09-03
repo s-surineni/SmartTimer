@@ -26,20 +26,21 @@ import com.example.smarttimer.ui.screens.MainScreen
 import com.example.smarttimer.ui.theme.SmartTimerTheme
 
 class MainActivity : ComponentActivity() {
-    private var timerService: TimerService? = null
+    private var _timerService = mutableStateOf<TimerService?>(null)
     private var isBound = false
     
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName?, service: IBinder?) {
             android.util.Log.d("MainActivity", "Service connected")
             val binder = service as TimerService.TimerBinder
-            timerService = binder.getService()
+            _timerService.value = binder.getService()
             isBound = true
             android.util.Log.d("MainActivity", "Service bound successfully")
         }
         
         override fun onServiceDisconnected(arg0: ComponentName?) {
             android.util.Log.d("MainActivity", "Service disconnected")
+            _timerService.value = null
             isBound = false
         }
     }
@@ -60,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SmartTimerApp(timerService)
+                    SmartTimerApp(_timerService.value)
                 }
             }
         }
@@ -107,6 +108,12 @@ fun SmartTimerApp(timerService: TimerService?) {
             isServiceReady = false
             android.util.Log.d("MainActivity", "Service is not ready for UI")
         }
+    }
+    
+    // Also check if service became available after initial render
+    LaunchedEffect(Unit) {
+        // This effect runs once and then we'll rely on the timerService parameter
+        android.util.Log.d("MainActivity", "Initial LaunchedEffect - timerService: ${timerService != null}")
     }
     
     val mainViewModel: MainViewModel = viewModel { MainViewModel(repository) }
