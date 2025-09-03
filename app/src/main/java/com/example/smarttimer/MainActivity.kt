@@ -93,15 +93,24 @@ fun SmartTimerApp(timerService: TimerService?) {
     val database = TimerDatabase.getDatabase(context)
     val repository = TimerRepository(database.timerDao())
     
+    // Track if service is ready
+    var isServiceReady by remember { mutableStateOf(false) }
+    
     // Set repository on the service if it's available
     LaunchedEffect(timerService) {
-        timerService?.setRepository(repository)
+        if (timerService != null) {
+            timerService.setRepository(repository)
+            isServiceReady = true
+            android.util.Log.d("MainActivity", "Service is ready for UI")
+        } else {
+            isServiceReady = false
+        }
     }
     
     val mainViewModel: MainViewModel = viewModel { MainViewModel(repository) }
     
-    // Only create TimerViewModel when service is available
-    val timerViewModel: TimerViewModel? = if (timerService != null) {
+    // Only create TimerViewModel when service is available and ready
+    val timerViewModel: TimerViewModel? = if (timerService != null && isServiceReady) {
         viewModel { TimerViewModel(repository, timerService) }
     } else {
         null
@@ -141,8 +150,15 @@ fun SmartTimerApp(timerService: TimerService?) {
         onStartTimer = { timer ->
             if (timerViewModel != null) {
                 timerViewModel.startTimer(timer)
+            } else if (!isServiceReady) {
+                // Service is still binding
+                android.widget.Toast.makeText(
+                    context,
+                    "Timer service is starting up. Please wait a moment.",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
             } else {
-                // Fallback: show a toast that service is not available
+                // Service binding failed
                 android.widget.Toast.makeText(
                     context,
                     "Timer service is not available. Please restart the app.",
