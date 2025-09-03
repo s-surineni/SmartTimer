@@ -31,12 +31,15 @@ class MainActivity : ComponentActivity() {
     
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName?, service: IBinder?) {
+            android.util.Log.d("MainActivity", "Service connected")
             val binder = service as TimerService.TimerBinder
             timerService = binder.getService()
             isBound = true
+            android.util.Log.d("MainActivity", "Service bound successfully")
         }
         
         override fun onServiceDisconnected(arg0: ComponentName?) {
+            android.util.Log.d("MainActivity", "Service disconnected")
             isBound = false
         }
     }
@@ -45,6 +48,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         // Start and bind to timer service
+        android.util.Log.d("MainActivity", "Starting and binding to TimerService")
         Intent(this, TimerService::class.java).also { intent ->
             startService(intent)
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
@@ -68,6 +72,18 @@ class MainActivity : ComponentActivity() {
             unbindService(connection)
             isBound = false
         }
+    }
+}
+
+private fun formatTime(milliseconds: Long): String {
+    val totalSeconds = milliseconds / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    
+    return when {
+        hours > 0 -> String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        else -> String.format("%02d:%02d", minutes, seconds)
     }
 }
 
@@ -123,7 +139,16 @@ fun SmartTimerApp(timerService: TimerService?) {
             }
         },
         onStartTimer = { timer ->
-            timerViewModel?.startTimer(timer)
+            if (timerViewModel != null) {
+                timerViewModel.startTimer(timer)
+            } else {
+                // Fallback: show a toast that service is not available
+                android.widget.Toast.makeText(
+                    context,
+                    "Timer service is not available. Please restart the app.",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
         },
         onStopTimer = { timerId ->
             timerViewModel?.stopTimer(timerId)
@@ -138,7 +163,7 @@ fun SmartTimerApp(timerService: TimerService?) {
             mainViewModel.setCurrentGroupIndex(index)
         },
         formatTime = { milliseconds ->
-            timerViewModel?.formatTime(milliseconds) ?: "00:00"
+            formatTime(milliseconds)
         },
         predefinedDurations = timerViewModel?.getPredefinedDurations() ?: emptyList()
     )
