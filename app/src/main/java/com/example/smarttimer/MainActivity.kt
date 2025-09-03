@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smarttimer.data.Timer
 import com.example.smarttimer.data.TimerDatabase
 import com.example.smarttimer.data.TimerRepository
 import com.example.smarttimer.service.TimerService
@@ -82,43 +83,51 @@ fun SmartTimerApp(timerService: TimerService?) {
     }
     
     val mainViewModel: MainViewModel = viewModel { MainViewModel(repository) }
-    val timerViewModel: TimerViewModel = viewModel { 
-        TimerViewModel(repository, timerService ?: TimerService().apply { setRepository(repository) })
+    
+    // Only create TimerViewModel when service is available
+    val timerViewModel: TimerViewModel? = if (timerService != null) {
+        viewModel { TimerViewModel(repository, timerService) }
+    } else {
+        null
     }
     
     val timerGroups by mainViewModel.timerGroups.collectAsStateWithLifecycle()
     val currentGroupIndex by mainViewModel.currentGroupIndex.collectAsStateWithLifecycle()
-    val activeTimers by timerViewModel.activeTimers.collectAsStateWithLifecycle()
+    val activeTimers = if (timerViewModel != null) {
+        timerViewModel.activeTimers.collectAsStateWithLifecycle()
+    } else {
+        remember { mutableStateOf(emptyMap<Long, Timer>()) }
+    }
     
     // Load timers for current group
     LaunchedEffect(currentGroupIndex, timerGroups) {
         if (timerGroups.isNotEmpty() && currentGroupIndex < timerGroups.size) {
             val currentGroup = timerGroups[currentGroupIndex]
-            timerViewModel.loadTimersForGroup(currentGroup.timerGroup.id)
+            timerViewModel?.loadTimersForGroup(currentGroup.timerGroup.id)
         }
     }
     
     MainScreen(
         timerGroups = timerGroups,
         currentGroupIndex = currentGroupIndex,
-        activeTimers = activeTimers,
+        activeTimers = activeTimers.value,
         onAddGroup = { name, color ->
             mainViewModel.addTimerGroup(name, color)
         },
         onAddTimer = { name, duration ->
             if (timerGroups.isNotEmpty() && currentGroupIndex < timerGroups.size) {
                 val currentGroup = timerGroups[currentGroupIndex]
-                timerViewModel.addTimer(name, duration, currentGroup.timerGroup.id)
+                timerViewModel?.addTimer(name, duration, currentGroup.timerGroup.id)
             }
         },
         onStartTimer = { timer ->
-            timerViewModel.startTimer(timer)
+            timerViewModel?.startTimer(timer)
         },
         onStopTimer = { timerId ->
-            timerViewModel.stopTimer(timerId)
+            timerViewModel?.stopTimer(timerId)
         },
         onDeleteTimer = { timer ->
-            timerViewModel.deleteTimer(timer)
+            timerViewModel?.deleteTimer(timer)
         },
         onDeleteGroup = { group ->
             mainViewModel.deleteTimerGroup(group.timerGroup)
@@ -127,8 +136,8 @@ fun SmartTimerApp(timerService: TimerService?) {
             mainViewModel.setCurrentGroupIndex(index)
         },
         formatTime = { milliseconds ->
-            timerViewModel.formatTime(milliseconds)
+            timerViewModel?.formatTime(milliseconds) ?: "00:00"
         },
-        predefinedDurations = timerViewModel.getPredefinedDurations()
+        predefinedDurations = timerViewModel?.getPredefinedDurations() ?: emptyList()
     )
 }
