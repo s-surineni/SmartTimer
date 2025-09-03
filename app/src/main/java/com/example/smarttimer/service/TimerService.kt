@@ -59,31 +59,43 @@ class TimerService : Service() {
     fun startTimer(timer: Timer) {
         if (activeJobs.containsKey(timer.id)) return
         
+        if (!::timerRepository.isInitialized) {
+            android.util.Log.e("TimerService", "Repository not initialized")
+            return
+        }
+        
         val job = serviceScope.launch {
-            var remainingTime = timer.remainingTime.ifZero { timer.duration }
-            
-            while (remainingTime > 0) {
-                // Update timer state
-                val updatedTimer = timer.copy(
-                    isActive = true,
-                    remainingTime = remainingTime,
-                    lastStartedAt = System.currentTimeMillis()
-                )
+            try {
+                var remainingTime = timer.remainingTime.ifZero { timer.duration }
                 
-                _activeTimers.value = _activeTimers.value + (timer.id to updatedTimer)
-                timerRepository.updateTimer(updatedTimer)
+                while (remainingTime > 0) {
+                    // Update timer state
+                    val updatedTimer = timer.copy(
+                        isActive = true,
+                        remainingTime = remainingTime,
+                        lastStartedAt = System.currentTimeMillis()
+                    )
+                    
+                    _activeTimers.value = _activeTimers.value + (timer.id to updatedTimer)
+                    timerRepository.updateTimer(updatedTimer)
+                    
+                    delay(1000) // Update every second
+                    remainingTime -= 1000
+                }
                 
-                delay(1000) // Update every second
-                remainingTime -= 1000
+                // Timer finished
+                timerRepository.stopTimer(timer.id)
+                _activeTimers.value = _activeTimers.value - timer.id
+                activeJobs.remove(timer.id)
+                
+                // Update notification
+                updateNotification()
+            } catch (e: Exception) {
+                android.util.Log.e("TimerService", "Error in timer job", e)
+                _activeTimers.value = _activeTimers.value - timer.id
+                activeJobs.remove(timer.id)
+                updateNotification()
             }
-            
-            // Timer finished
-            timerRepository.stopTimer(timer.id)
-            _activeTimers.value = _activeTimers.value - timer.id
-            activeJobs.remove(timer.id)
-            
-            // Update notification
-            updateNotification()
         }
         
         activeJobs[timer.id] = job
@@ -94,9 +106,17 @@ class TimerService : Service() {
         activeJobs[timerId]?.cancel()
         activeJobs.remove(timerId)
         serviceScope.launch {
-            timerRepository.stopTimer(timerId)
-            _activeTimers.value = _activeTimers.value - timerId
-            updateNotification()
+            try {
+                if (::timerRepository.isInitialized) {
+                    timerRepository.stopTimer(timerId)
+                }
+                _activeTimers.value = _activeTimers.value - timerId
+                updateNotification()
+            } catch (e: Exception) {
+                android.util.Log.e("TimerService", "Error stopping timer", e)
+                _activeTimers.value = _activeTimers.value - timerId
+                updateNotification()
+            }
         }
     }
     

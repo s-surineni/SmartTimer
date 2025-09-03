@@ -76,8 +76,15 @@ fun SmartTimerApp(timerService: TimerService?) {
     val database = TimerDatabase.getDatabase(context)
     val repository = TimerRepository(database.timerDao())
     
+    // Set repository on the service if it's available
+    LaunchedEffect(timerService) {
+        timerService?.setRepository(repository)
+    }
+    
     val mainViewModel: MainViewModel = viewModel { MainViewModel(repository) }
-    val timerViewModel: TimerViewModel = viewModel { TimerViewModel(repository, timerService ?: TimerService()) }
+    val timerViewModel: TimerViewModel = viewModel { 
+        TimerViewModel(repository, timerService ?: TimerService().apply { setRepository(repository) })
+    }
     
     val timerGroups by mainViewModel.timerGroups.collectAsStateWithLifecycle()
     val currentGroupIndex by mainViewModel.currentGroupIndex.collectAsStateWithLifecycle()
