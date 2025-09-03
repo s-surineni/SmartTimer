@@ -136,12 +136,12 @@ class TimerService : Service() {
                 description = "Shows active timers"
             }
             
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
     
-    private fun createNotification() = NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun createNotification() = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
         .setContentTitle("Smart Timer")
         .setContentText("${_activeTimers.value.size} active timer(s)")
         .setSmallIcon(R.drawable.ic_timer)
@@ -149,7 +149,7 @@ class TimerService : Service() {
         .build()
     
     private fun updateNotification() {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, createNotification())
     }
     
