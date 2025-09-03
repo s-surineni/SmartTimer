@@ -119,22 +119,30 @@ class TimerService : Service() {
                 _activeTimers.value = _activeTimers.value - timer.id
                 activeJobs.remove(timer.id)
                 
-                // Play sound and show completion notification
-                playTimerFinishedSound()
-                showTimerFinishedNotification(timer)
+                // Play sound and show completion notification on main thread
+                withContext(Dispatchers.Main) {
+                    playTimerFinishedSound()
+                    showTimerFinishedNotification(timer)
+                }
                 
-                // Update notification
-                updateNotification()
+                // Update notification on main thread
+                withContext(Dispatchers.Main) {
+                    updateNotification()
+                }
             } catch (e: Exception) {
                 android.util.Log.e("TimerService", "Error in timer job", e)
                 _activeTimers.value = _activeTimers.value - timer.id
                 activeJobs.remove(timer.id)
-                updateNotification()
+                withContext(Dispatchers.Main) {
+                    updateNotification()
+                }
             }
         }
         
         activeJobs[timer.id] = job
-        updateNotification()
+        serviceScope.launch(Dispatchers.Main) {
+            updateNotification()
+        }
     }
     
     fun stopTimer(timerId: Long) {
