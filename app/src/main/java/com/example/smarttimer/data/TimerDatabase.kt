@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [TimerGroup::class, Timer::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class TimerDatabase : RoomDatabase() {
