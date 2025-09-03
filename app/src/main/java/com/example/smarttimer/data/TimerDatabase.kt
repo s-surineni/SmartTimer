@@ -62,32 +62,17 @@ abstract class TimerDatabase : RoomDatabase() {
             
             // Insert groups and get their IDs
             val defaultGroupId = timerDao.insertTimerGroup(defaultGroup)
-            val workoutGroupId = timerDao.insertTimerGroup(workoutGroup)
-            val cookingGroupId = timerDao.insertTimerGroup(cookingGroup)
+            timerDao.insertTimerGroup(workoutGroup)
+            timerDao.insertTimerGroup(cookingGroup)
             
-            // Add default timers to each group
+            // Add sample timers only to Default group
             val defaultTimers = listOf(
-                Timer(name = "5 Minute Break", duration = 5 * 60 * 1000L, groupId = defaultGroupId),
-                Timer(name = "10 Minute Focus", duration = 10 * 60 * 1000L, groupId = defaultGroupId),
-                Timer(name = "25 Minute Pomodoro", duration = 25 * 60 * 1000L, groupId = defaultGroupId)
+                Timer(name = "30 Seconds", duration = 30 * 1000L, groupId = defaultGroupId),
+                Timer(name = "1 Minute", duration = 60 * 1000L, groupId = defaultGroupId)
             )
             
-            val workoutTimers = listOf(
-                Timer(name = "Plank Hold", duration = 60 * 1000L, groupId = workoutGroupId),
-                Timer(name = "Rest Between Sets", duration = 90 * 1000L, groupId = workoutGroupId),
-                Timer(name = "Cardio Session", duration = 20 * 60 * 1000L, groupId = workoutGroupId),
-                Timer(name = "Stretching", duration = 5 * 60 * 1000L, groupId = workoutGroupId)
-            )
-            
-            val cookingTimers = listOf(
-                Timer(name = "Boil Water", duration = 5 * 60 * 1000L, groupId = cookingGroupId),
-                Timer(name = "Rice Cooking", duration = 15 * 60 * 1000L, groupId = cookingGroupId),
-                Timer(name = "Pasta", duration = 8 * 60 * 1000L, groupId = cookingGroupId),
-                Timer(name = "Baking", duration = 25 * 60 * 1000L, groupId = cookingGroupId)
-            )
-            
-            // Insert all timers
-            (defaultTimers + workoutTimers + cookingTimers).forEach { timer ->
+            // Insert only default group timers
+            defaultTimers.forEach { timer ->
                 timerDao.insertTimer(timer)
             }
         }
