@@ -107,6 +107,8 @@ fun SmartTimerApp(timerService: TimerService?) {
         }
     }
     
+
+    
     MainScreen(
         timerGroups = timerGroups,
         currentGroupIndex = currentGroupIndex,

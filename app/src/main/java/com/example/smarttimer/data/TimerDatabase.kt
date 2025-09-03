@@ -45,7 +45,9 @@ abstract class TimerDatabase : RoomDatabase() {
             }
         }
         
-        private suspend fun populateDatabase(timerDao: TimerDao) {
+                private suspend fun populateDatabase(timerDao: TimerDao) {
+            android.util.Log.d("TimerDatabase", "Populating database with default data")
+            
             // Create default groups
             val defaultGroup = TimerGroup(
                 name = "Default",
@@ -59,11 +61,13 @@ abstract class TimerDatabase : RoomDatabase() {
                 name = "Cooking",
                 color = android.graphics.Color.parseColor("#FFFF6B35").toInt()
             )
-            
+
             // Insert groups and get their IDs
             val defaultGroupId = timerDao.insertTimerGroup(defaultGroup)
             timerDao.insertTimerGroup(workoutGroup)
             timerDao.insertTimerGroup(cookingGroup)
+            
+            android.util.Log.d("TimerDatabase", "Created groups, defaultGroupId: $defaultGroupId")
             
             // Add sample timers only to Default group
             val defaultTimers = listOf(
@@ -74,8 +78,11 @@ abstract class TimerDatabase : RoomDatabase() {
             
             // Insert only default group timers
             defaultTimers.forEach { timer ->
-                timerDao.insertTimer(timer)
+                val timerId = timerDao.insertTimer(timer)
+                android.util.Log.d("TimerDatabase", "Inserted timer: ${timer.name} with ID: $timerId, duration: ${timer.duration}")
             }
+            
+            android.util.Log.d("TimerDatabase", "Database population completed")
         }
     }
 }

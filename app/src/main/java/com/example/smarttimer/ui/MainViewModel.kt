@@ -25,15 +25,22 @@ class MainViewModel(private val repository: TimerRepository) : ViewModel() {
         viewModelScope.launch {
             repository.getAllTimerGroups()
                 .combine(repository.getAllTimers()) { groups, timers ->
+                    android.util.Log.d("MainViewModel", "Loaded ${groups.size} groups and ${timers.size} timers")
                     groups.map { group ->
+                        val groupTimers = timers.filter { it.groupId == group.id }
+                        android.util.Log.d("MainViewModel", "Group ${group.name} has ${groupTimers.size} timers")
+                        groupTimers.forEach { timer ->
+                            android.util.Log.d("MainViewModel", "Timer: ${timer.name}, duration: ${timer.duration}")
+                        }
                         TimerGroupWithTimers(
                             timerGroup = group,
-                            timers = timers.filter { it.groupId == group.id }
+                            timers = groupTimers
                         )
                     }
                 }
                 .collect { groupsWithTimers ->
                     _timerGroups.value = groupsWithTimers
+                    android.util.Log.d("MainViewModel", "Updated timer groups: ${groupsWithTimers.size}")
                 }
         }
     }
