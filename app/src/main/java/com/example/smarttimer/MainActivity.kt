@@ -98,12 +98,14 @@ fun SmartTimerApp(timerService: TimerService?) {
     
     // Set repository on the service if it's available
     LaunchedEffect(timerService) {
+        android.util.Log.d("MainActivity", "LaunchedEffect triggered, timerService: ${timerService != null}")
         if (timerService != null) {
             timerService.setRepository(repository)
             isServiceReady = true
             android.util.Log.d("MainActivity", "Service is ready for UI")
         } else {
             isServiceReady = false
+            android.util.Log.d("MainActivity", "Service is not ready for UI")
         }
     }
     
@@ -111,8 +113,10 @@ fun SmartTimerApp(timerService: TimerService?) {
     
     // Only create TimerViewModel when service is available and ready
     val timerViewModel: TimerViewModel? = if (timerService != null && isServiceReady) {
+        android.util.Log.d("MainActivity", "Creating TimerViewModel - service is ready")
         viewModel { TimerViewModel(repository, timerService) }
     } else {
+        android.util.Log.d("MainActivity", "TimerViewModel not created - timerService: ${timerService != null}, isServiceReady: $isServiceReady")
         null
     }
     
