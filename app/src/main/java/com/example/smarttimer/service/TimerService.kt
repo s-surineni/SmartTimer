@@ -53,6 +53,7 @@ class TimerService : Service() {
     override fun onCreate() {
         super.onCreate()
         serviceContext = this
+        android.util.Log.d("TimerService", "Service created, context stored: ${serviceContext != null}")
         createNotificationChannels()
         val notification = createNotification()
         if (notification != null) {
@@ -121,11 +122,13 @@ class TimerService : Service() {
                 _activeTimers.value = _activeTimers.value - timer.id
                 activeJobs.remove(timer.id)
                 
-                // Play sound and show completion notification on main thread
-                withContext(Dispatchers.Main) {
-                    playTimerFinishedSound()
-                    showTimerFinishedNotification(timer)
-                }
+                                    // Play sound and show completion notification on main thread
+                    android.util.Log.d("TimerService", "Timer finished, about to play sound and show notification")
+                    withContext(Dispatchers.Main) {
+                        android.util.Log.d("TimerService", "On main thread, playing sound and notification")
+                        playTimerFinishedSound()
+                        showTimerFinishedNotification(timer)
+                    }
                 
                 // Update notification on main thread
                 withContext(Dispatchers.Main) {
@@ -225,7 +228,12 @@ class TimerService : Service() {
     
     private fun playTimerFinishedSound() {
         try {
-            val context = serviceContext ?: return
+            val context = serviceContext
+            android.util.Log.d("TimerService", "playTimerFinishedSound - context: ${context != null}")
+            if (context == null) {
+                android.util.Log.e("TimerService", "Context is null in playTimerFinishedSound")
+                return
+            }
             
             // Play default notification sound
             val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -248,7 +256,12 @@ class TimerService : Service() {
     
     private fun showTimerFinishedNotification(timer: Timer) {
         try {
-            val context = serviceContext ?: return
+            val context = serviceContext
+            android.util.Log.d("TimerService", "showTimerFinishedNotification - context: ${context != null}")
+            if (context == null) {
+                android.util.Log.e("TimerService", "Context is null in showTimerFinishedNotification")
+                return
+            }
             
             // Create intent to open app
             val intent = Intent(context, MainActivity::class.java).apply {

@@ -67,6 +67,7 @@ abstract class TimerDatabase : RoomDatabase() {
             
             // Add sample timers only to Default group
             val defaultTimers = listOf(
+                Timer(name = "5 Seconds", duration = 5 * 1000L, groupId = defaultGroupId),
                 Timer(name = "30 Seconds", duration = 30 * 1000L, groupId = defaultGroupId),
                 Timer(name = "1 Minute", duration = 60 * 1000L, groupId = defaultGroupId)
             )
