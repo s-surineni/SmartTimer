@@ -36,6 +36,7 @@ class TimerService : Service() {
     val activeTimers: StateFlow<Map<Long, Timer>> = _activeTimers.asStateFlow()
     
     private val activeJobs = ConcurrentHashMap<Long, Job>()
+    private var serviceContext: Context? = null
     
     companion object {
         private const val NOTIFICATION_ID = 1
@@ -51,6 +52,7 @@ class TimerService : Service() {
     
     override fun onCreate() {
         super.onCreate()
+        serviceContext = this
         createNotificationChannels()
         val notification = createNotification()
         if (notification != null) {
@@ -71,7 +73,7 @@ class TimerService : Service() {
                 }
             }
             ACTION_DISMISS_NOTIFICATION -> {
-                val notificationManager = applicationContext?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                val notificationManager = serviceContext?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.cancel(NOTIFICATION_ID + 1)
             }
         }
@@ -171,7 +173,7 @@ class TimerService : Service() {
     
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val context = applicationContext ?: return
+            val context = serviceContext ?: return
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             
             // Service channel for active timers
@@ -201,7 +203,7 @@ class TimerService : Service() {
     }
     
     private fun createNotification(): android.app.Notification? {
-        val context = applicationContext ?: return null
+        val context = serviceContext ?: return null
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Smart Timer")
             .setContentText("${_activeTimers.value.size} active timer(s)")
@@ -212,7 +214,7 @@ class TimerService : Service() {
     
     private fun updateNotification() {
         try {
-            val context = applicationContext ?: return
+            val context = serviceContext ?: return
             val notification = createNotification() ?: return
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID, notification)
@@ -223,7 +225,7 @@ class TimerService : Service() {
     
     private fun playTimerFinishedSound() {
         try {
-            val context = applicationContext ?: return
+            val context = serviceContext ?: return
             
             // Play default notification sound
             val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -246,7 +248,7 @@ class TimerService : Service() {
     
     private fun showTimerFinishedNotification(timer: Timer) {
         try {
-            val context = applicationContext ?: return
+            val context = serviceContext ?: return
             
             // Create intent to open app
             val intent = Intent(context, MainActivity::class.java).apply {
