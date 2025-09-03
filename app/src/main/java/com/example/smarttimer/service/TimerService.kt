@@ -36,7 +36,6 @@ class TimerService : Service() {
     val activeTimers: StateFlow<Map<Long, Timer>> = _activeTimers.asStateFlow()
     
     private val activeJobs = ConcurrentHashMap<Long, Job>()
-    private var serviceContext: Context? = null
     
     companion object {
         private const val NOTIFICATION_ID = 1
@@ -52,8 +51,7 @@ class TimerService : Service() {
     
     override fun onCreate() {
         super.onCreate()
-        serviceContext = this
-        android.util.Log.d("TimerService", "Service created, context stored: ${serviceContext != null}")
+        android.util.Log.d("TimerService", "Service created")
         createNotificationChannels()
         val notification = createNotification()
         if (notification != null) {
@@ -74,7 +72,7 @@ class TimerService : Service() {
                 }
             }
             ACTION_DISMISS_NOTIFICATION -> {
-                val notificationManager = serviceContext?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.cancel(NOTIFICATION_ID + 1)
             }
         }
@@ -176,8 +174,7 @@ class TimerService : Service() {
     
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val context = serviceContext ?: return
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             
             // Service channel for active timers
             val serviceChannel = NotificationChannel(
@@ -206,8 +203,7 @@ class TimerService : Service() {
     }
     
     private fun createNotification(): android.app.Notification? {
-        val context = serviceContext ?: return null
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Smart Timer")
             .setContentText("${_activeTimers.value.size} active timer(s)")
             .setSmallIcon(R.drawable.ic_timer)
@@ -217,9 +213,8 @@ class TimerService : Service() {
     
     private fun updateNotification() {
         try {
-            val context = serviceContext ?: return
             val notification = createNotification() ?: return
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID, notification)
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error updating notification", e)
@@ -228,21 +223,16 @@ class TimerService : Service() {
     
     private fun playTimerFinishedSound() {
         try {
-            val context = serviceContext
-            android.util.Log.d("TimerService", "playTimerFinishedSound - context: ${context != null}")
-            if (context == null) {
-                android.util.Log.e("TimerService", "Context is null in playTimerFinishedSound")
-                return
-            }
+            android.util.Log.d("TimerService", "playTimerFinishedSound - using service context")
             
             // Play default notification sound
             val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(context, notificationUri)
+            val ringtone = RingtoneManager.getRingtone(this, notificationUri)
             ringtone?.play()
             
             // Vibrate
             @Suppress("DEPRECATION")
-            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 200, 500), -1))
             } else {
@@ -256,42 +246,37 @@ class TimerService : Service() {
     
     private fun showTimerFinishedNotification(timer: Timer) {
         try {
-            val context = serviceContext
-            android.util.Log.d("TimerService", "showTimerFinishedNotification - context: ${context != null}")
-            if (context == null) {
-                android.util.Log.e("TimerService", "Context is null in showTimerFinishedNotification")
-                return
-            }
+            android.util.Log.d("TimerService", "showTimerFinishedNotification - using service context")
             
             // Create intent to open app
-            val intent = Intent(context, MainActivity::class.java).apply {
+            val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
             val pendingIntent = PendingIntent.getActivity(
-                context, 0, intent,
+                this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
             // Create stop timer intent
-            val stopIntent = Intent(context, TimerService::class.java).apply {
+            val stopIntent = Intent(this, TimerService::class.java).apply {
                 action = ACTION_STOP_TIMER
                 putExtra("timer_id", timer.id)
             }
             val stopPendingIntent = PendingIntent.getService(
-                context, timer.id.toInt(), stopIntent,
+                this, timer.id.toInt(), stopIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
             // Create dismiss intent
-            val dismissIntent = Intent(context, TimerService::class.java).apply {
+            val dismissIntent = Intent(this, TimerService::class.java).apply {
                 action = ACTION_DISMISS_NOTIFICATION
             }
             val dismissPendingIntent = PendingIntent.getService(
-                context, 0, dismissIntent,
+                this, 0, dismissIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            val notification = NotificationCompat.Builder(context, TIMER_FINISHED_CHANNEL_ID)
+            val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setContentTitle("Timer Finished!")
                 .setContentText("${timer.name} has completed")
                 .setSmallIcon(R.drawable.ic_timer)
@@ -303,7 +288,7 @@ class TimerService : Service() {
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
                 .build()
             
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID + 1, notification)
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error showing timer finished notification", e)
