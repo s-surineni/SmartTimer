@@ -68,17 +68,21 @@ class TimerService : Service() {
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        android.util.Log.d("TimerService", "onStartCommand called with action: ${intent?.action}")
         when (intent?.action) {
             ACTION_STOP_TIMER -> {
                 val timerId = intent.getLongExtra("timer_id", -1L)
+                android.util.Log.d("TimerService", "Stop timer action received for timer ID: $timerId")
                 if (timerId != -1L) {
                     stopTimer(timerId)
                 }
             }
             ACTION_STOP_ALL_TIMERS -> {
+                android.util.Log.d("TimerService", "Stop all timers action received")
                 stopAllTimers()
             }
             ACTION_DISMISS_NOTIFICATION -> {
+                android.util.Log.d("TimerService", "Dismiss notification action received")
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.cancel(NOTIFICATION_ID + 1)
             }
@@ -161,6 +165,7 @@ class TimerService : Service() {
     }
     
     fun stopTimer(timerId: Long) {
+        android.util.Log.d("TimerService", "stopTimer called for timer ID: $timerId")
         activeJobs[timerId]?.cancel()
         activeJobs.remove(timerId)
         serviceScope.launch {
@@ -169,6 +174,7 @@ class TimerService : Service() {
                     timerRepository.stopTimer(timerId)
                 }
                 _activeTimers.value = _activeTimers.value - timerId
+                android.util.Log.d("TimerService", "Timer $timerId stopped successfully")
                 updateNotification()
             } catch (e: Exception) {
                 android.util.Log.e("TimerService", "Error stopping timer", e)
@@ -243,41 +249,73 @@ class TimerService : Service() {
                 .setContentIntent(openAppPendingIntent)
                 .build()
         } else {
-            // Show active timers with countdown
-            val timerList = activeTimers.values.toList()
-            val primaryTimer = timerList.first()
-            val remainingTime = formatTime(primaryTimer.remainingTime)
-            
-            val contentText = if (timerList.size == 1) {
-                "${primaryTimer.getDisplayName()}: $remainingTime"
-            } else {
-                "${primaryTimer.getDisplayName()}: $remainingTime (+${timerList.size - 1} more)"
+            createActiveTimersNotification(activeTimers, openAppPendingIntent)
+        }
+    }
+    
+    private fun createActiveTimersNotification(
+        activeTimers: Map<Long, Timer>,
+        openAppPendingIntent: PendingIntent
+    ): android.app.Notification {
+        val timerList = activeTimers.values.toList()
+        val primaryTimer = timerList.first()
+        val remainingTime = formatTime(primaryTimer.remainingTime)
+        
+        val contentText = if (timerList.size == 1) {
+            "${primaryTimer.getDisplayName()}: $remainingTime"
+        } else {
+            "${primaryTimer.getDisplayName()}: $remainingTime (+${timerList.size - 1} more)"
+        }
+        
+        // Create stop all timers action
+        val stopAllIntent = Intent(this, TimerService::class.java).apply {
+            action = ACTION_STOP_ALL_TIMERS
+        }
+        val stopAllPendingIntent = PendingIntent.getService(
+            this, 1, stopAllIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Timer Running")
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_timer)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setShowWhen(false)
+            .setContentIntent(openAppPendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Stop All",
+                stopAllPendingIntent
+            )
+        
+        // Add individual stop actions for up to 3 timers (Android notification limit)
+        val timersToShow = timerList.take(3)
+        timersToShow.forEach { timer ->
+            val stopTimerIntent = Intent(this, TimerService::class.java).apply {
+                action = ACTION_STOP_TIMER
+                putExtra("timer_id", timer.id)
             }
-            
-            // Create stop all timers action
-            val stopAllIntent = Intent(this, TimerService::class.java).apply {
-                action = ACTION_STOP_ALL_TIMERS
-            }
-            val stopAllPendingIntent = PendingIntent.getService(
-                this, 1, stopAllIntent,
+            val stopTimerPendingIntent = PendingIntent.getService(
+                this, timer.id.toInt() + 1000, stopTimerIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Timer Running")
-                .setContentText(contentText)
-                .setSmallIcon(R.drawable.ic_timer)
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setShowWhen(false)
-                .setContentIntent(openAppPendingIntent)
-                .addAction(
-                    R.drawable.ic_timer, // You might want to add a stop icon
-                    "Stop All",
-                    stopAllPendingIntent
-                )
-                .build()
+            val actionTitle = if (timerList.size == 1) {
+                "Stop Timer"
+            } else {
+                "Stop ${timer.getDisplayName()}"
+            }
+            
+            builder.addAction(
+                android.R.drawable.ic_media_pause,
+                actionTitle,
+                stopTimerPendingIntent
+            )
         }
+        
+        return builder.build()
     }
     
     private fun updateNotification() {
