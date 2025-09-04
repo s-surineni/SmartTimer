@@ -55,7 +55,10 @@ class TimerService : Service() {
         createNotificationChannels()
         val notification = createNotification()
         if (notification != null) {
+            android.util.Log.d("TimerService", "Starting foreground service with notification: ${notification.extras.getString("android.title")} - ${notification.extras.getString("android.text")}")
             startForeground(NOTIFICATION_ID, notification)
+        } else {
+            android.util.Log.e("TimerService", "Failed to create notification for foreground service")
         }
     }
     
@@ -244,6 +247,7 @@ class TimerService : Service() {
         try {
             val notification = createNotification() ?: return
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            android.util.Log.d("TimerService", "Updating notification: ${notification.extras.getString("android.title")} - ${notification.extras.getString("android.text")}")
             notificationManager.notify(NOTIFICATION_ID, notification)
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error updating notification", e)
