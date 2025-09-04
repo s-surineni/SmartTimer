@@ -9,6 +9,9 @@ interface TimerDao {
     @Query("SELECT * FROM timer_groups ORDER BY createdAt ASC")
     fun getAllTimerGroups(): Flow<List<TimerGroup>>
     
+    @Query("SELECT COUNT(*) FROM timer_groups")
+    suspend fun getGroupCount(): Int
+    
     @Insert
     suspend fun insertTimerGroup(timerGroup: TimerGroup): Long
     

@@ -28,6 +28,7 @@ abstract class TimerDatabase : RoomDatabase() {
                     "timer_database"
                 )
                 .addCallback(DatabaseCallback())
+                .fallbackToDestructiveMigration() // This will recreate the database when version changes
                 .build()
                 INSTANCE = instance
                 instance
@@ -40,6 +41,20 @@ abstract class TimerDatabase : RoomDatabase() {
                 INSTANCE?.let { database ->
                     CoroutineScope(Dispatchers.IO).launch {
                         populateDatabase(database.timerDao())
+                    }
+                }
+            }
+            
+            override fun onOpen(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                super.onOpen(db)
+                INSTANCE?.let { database ->
+                    CoroutineScope(Dispatchers.IO).launch {
+                        // Check if database is empty and populate if needed
+                        val groupCount = database.timerDao().getGroupCount()
+                        if (groupCount == 0) {
+                            android.util.Log.d("TimerDatabase", "Database is empty, populating with default data")
+                            populateDatabase(database.timerDao())
+                        }
                     }
                 }
             }
