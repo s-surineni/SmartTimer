@@ -43,6 +43,7 @@ class TimerService : Service() {
         private const val TIMER_FINISHED_CHANNEL_ID = "timer_finished_channel"
         private const val ACTION_STOP_TIMER = "com.example.smarttimer.STOP_TIMER"
         private const val ACTION_DISMISS_NOTIFICATION = "com.example.smarttimer.DISMISS_NOTIFICATION"
+        const val ACTION_STOP_ALL_TIMERS = "com.example.smarttimer.STOP_ALL_TIMERS"
     }
     
     inner class TimerBinder : Binder() {
@@ -73,6 +74,9 @@ class TimerService : Service() {
                 if (timerId != -1L) {
                     stopTimer(timerId)
                 }
+            }
+            ACTION_STOP_ALL_TIMERS -> {
+                stopAllTimers()
             }
             ACTION_DISMISS_NOTIFICATION -> {
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -174,6 +178,13 @@ class TimerService : Service() {
         }
     }
     
+    fun stopAllTimers() {
+        val activeTimerIds = _activeTimers.value.keys.toList()
+        activeTimerIds.forEach { timerId ->
+            stopTimer(timerId)
+        }
+    }
+    
     fun pauseTimer(timerId: Long) {
         activeJobs[timerId]?.cancel()
         activeJobs.remove(timerId)
@@ -212,6 +223,16 @@ class TimerService : Service() {
     
     private fun createNotification(): android.app.Notification? {
         val activeTimers = _activeTimers.value
+        
+        // Create intent to open the app when notification is tapped
+        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val openAppPendingIntent = PendingIntent.getActivity(
+            this, 0, openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         return if (activeTimers.isEmpty()) {
             // No active timers - show basic service notification
             NotificationCompat.Builder(this, CHANNEL_ID)
@@ -219,6 +240,7 @@ class TimerService : Service() {
                 .setContentText("No active timers")
                 .setSmallIcon(R.drawable.ic_timer)
                 .setOngoing(true)
+                .setContentIntent(openAppPendingIntent)
                 .build()
         } else {
             // Show active timers with countdown
@@ -227,10 +249,19 @@ class TimerService : Service() {
             val remainingTime = formatTime(primaryTimer.remainingTime)
             
             val contentText = if (timerList.size == 1) {
-                "${primaryTimer.name}: $remainingTime"
+                "${primaryTimer.getDisplayName()}: $remainingTime"
             } else {
-                "${primaryTimer.name}: $remainingTime (+${timerList.size - 1} more)"
+                "${primaryTimer.getDisplayName()}: $remainingTime (+${timerList.size - 1} more)"
             }
+            
+            // Create stop all timers action
+            val stopAllIntent = Intent(this, TimerService::class.java).apply {
+                action = ACTION_STOP_ALL_TIMERS
+            }
+            val stopAllPendingIntent = PendingIntent.getService(
+                this, 1, stopAllIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
             
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Timer Running")
@@ -239,6 +270,12 @@ class TimerService : Service() {
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setShowWhen(false)
+                .setContentIntent(openAppPendingIntent)
+                .addAction(
+                    R.drawable.ic_timer, // You might want to add a stop icon
+                    "Stop All",
+                    stopAllPendingIntent
+                )
                 .build()
         }
     }
@@ -311,7 +348,7 @@ class TimerService : Service() {
             
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setContentTitle("Timer Finished!")
-                .setContentText("${timer.name} has completed")
+                .setContentText("${timer.getDisplayName()} has completed")
                 .setSmallIcon(R.drawable.ic_timer)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
