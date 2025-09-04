@@ -111,6 +111,11 @@ class TimerService : Service() {
                     _activeTimers.value = _activeTimers.value + (timer.id to updatedTimer)
                     timerRepository.updateTimer(updatedTimer)
                     
+                    // Update notification every second to show countdown
+                    withContext(Dispatchers.Main) {
+                        updateNotification()
+                    }
+                    
                     delay(1000) // Update every second
                     remainingTime -= 1000
                 }
@@ -203,12 +208,36 @@ class TimerService : Service() {
     }
     
     private fun createNotification(): android.app.Notification? {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Smart Timer")
-            .setContentText("${_activeTimers.value.size} active timer(s)")
-            .setSmallIcon(R.drawable.ic_timer)
-            .setOngoing(true)
-            .build()
+        val activeTimers = _activeTimers.value
+        return if (activeTimers.isEmpty()) {
+            // No active timers - show basic service notification
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Smart Timer")
+                .setContentText("No active timers")
+                .setSmallIcon(R.drawable.ic_timer)
+                .setOngoing(true)
+                .build()
+        } else {
+            // Show active timers with countdown
+            val timerList = activeTimers.values.toList()
+            val primaryTimer = timerList.first()
+            val remainingTime = formatTime(primaryTimer.remainingTime)
+            
+            val contentText = if (timerList.size == 1) {
+                "${primaryTimer.name}: $remainingTime"
+            } else {
+                "${primaryTimer.name}: $remainingTime (+${timerList.size - 1} more)"
+            }
+            
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Timer Running")
+                .setContentText(contentText)
+                .setSmallIcon(R.drawable.ic_timer)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setShowWhen(false)
+                .build()
+        }
     }
     
     private fun updateNotification() {
@@ -292,6 +321,18 @@ class TimerService : Service() {
             notificationManager.notify(NOTIFICATION_ID + 1, notification)
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error showing timer finished notification", e)
+        }
+    }
+    
+    private fun formatTime(milliseconds: Long): String {
+        val totalSeconds = milliseconds / 1000
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        
+        return when {
+            hours > 0 -> String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            else -> String.format("%02d:%02d", minutes, seconds)
         }
     }
     
