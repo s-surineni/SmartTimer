@@ -20,7 +20,8 @@ fun AddTimerDialog(
 ) {
     var timerName by remember { mutableStateOf("") }
     var selectedDuration by remember { mutableStateOf<Long?>(null) }
-    var customDuration by remember { mutableStateOf("") }
+    var customMinutes by remember { mutableStateOf("") }
+    var customSeconds by remember { mutableStateOf("") }
     var isCustomDuration by remember { mutableStateOf(false) }
     
     AlertDialog(
@@ -62,15 +63,36 @@ fun AddTimerDialog(
                 }
                 
                 if (isCustomDuration) {
-                    OutlinedTextField(
-                        value = customDuration,
-                        onValueChange = { customDuration = it },
-                        label = { Text("Duration (minutes)") },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                    Text(
+                        text = "Enter time in minutes and/or seconds:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = customMinutes,
+                            onValueChange = { customMinutes = it },
+                            label = { Text("Minutes") },
+                            placeholder = { Text("0") },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = customSeconds,
+                            onValueChange = { customSeconds = it },
+                            label = { Text("Seconds") },
+                            placeholder = { Text("0") },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 } else {
                     LazyColumn(
                         modifier = Modifier.height(200.dp),
@@ -113,8 +135,9 @@ fun AddTimerDialog(
                 onClick = {
                     val duration = when {
                         isCustomDuration -> {
-                            val minutes = customDuration.toLongOrNull() ?: 0L
-                            minutes * 60 * 1000L
+                            val minutes = customMinutes.toLongOrNull() ?: 0L
+                            val seconds = customSeconds.toLongOrNull() ?: 0L
+                            (minutes * 60 + seconds) * 1000L
                         }
                         else -> selectedDuration ?: 0L
                     }
@@ -125,7 +148,11 @@ fun AddTimerDialog(
                     }
                 },
                 enabled = timerName.isNotBlank() && 
-                    (if (isCustomDuration) customDuration.isNotBlank() else selectedDuration != null)
+                    (if (isCustomDuration) {
+                        val minutes = customMinutes.toLongOrNull() ?: 0L
+                        val seconds = customSeconds.toLongOrNull() ?: 0L
+                        (customMinutes.isNotBlank() || customSeconds.isNotBlank()) && (minutes > 0 || seconds > 0)
+                    } else selectedDuration != null)
             ) {
                 Text("Add Timer")
             }
