@@ -22,7 +22,7 @@ import com.example.smarttimer.ui.components.TimerCard
 fun TimerGroupScreen(
     timerGroup: TimerGroupWithTimers,
     activeTimers: Map<Long, Timer>,
-    onAddTimer: (duration: Long) -> Unit,
+    onAddTimer: (name: String?, duration: Long) -> Unit,
     onStartTimer: (Timer) -> Unit,
     onStopTimer: (Long) -> Unit,
     onDeleteTimer: (Timer) -> Unit,
@@ -139,8 +139,8 @@ fun TimerGroupScreen(
     if (showAddTimerDialog) {
         AddTimerDialog(
             onDismiss = { showAddTimerDialog = false },
-            onConfirm = { duration ->
-                onAddTimer(duration)
+            onConfirm = { name, duration ->
+                onAddTimer(name, duration)
                 showAddTimerDialog = false
             }
         )

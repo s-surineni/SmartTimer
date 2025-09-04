@@ -24,7 +24,7 @@ fun MainScreen(
     currentGroupIndex: Int,
     activeTimers: Map<Long, Timer>,
     onAddGroup: (name: String, color: Int) -> Unit,
-    onAddTimer: (duration: Long) -> Unit,
+    onAddTimer: (name: String?, duration: Long) -> Unit,
     onStartTimer: (Timer) -> Unit,
     onStopTimer: (Long) -> Unit,
     onDeleteTimer: (Timer) -> Unit,

@@ -40,10 +40,10 @@ class TimerViewModel(
         }
     }
     
-    fun addTimer(duration: Long, groupId: Long) {
+    fun addTimer(name: String?, duration: Long, groupId: Long) {
         viewModelScope.launch {
             val newTimer = Timer(
-                name = null, // No custom name, will use duration-based name
+                name = name, // Use provided name or null for duration-based name
                 duration = duration,
                 groupId = groupId
             )

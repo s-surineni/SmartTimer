@@ -10,31 +10,40 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AddTimerDialog(
     onDismiss: () -> Unit,
-    onConfirm: (duration: Long) -> Unit
+    onConfirm: (name: String?, duration: Long) -> Unit
 ) {
     var customMinutes by remember { mutableStateOf("") }
     var customSeconds by remember { mutableStateOf("") }
+    var timerName by remember { mutableStateOf("") }
     
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text("Add New Timer")
         },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "Enter timer duration:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                
-                Text(
-                    text = "Enter time in minutes and/or seconds:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                        text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Enter timer details:",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
+                        OutlinedTextField(
+                            value = timerName,
+                            onValueChange = { timerName = it },
+                            label = { Text("Timer Name (Optional)") },
+                            placeholder = { Text("e.g., Morning Workout") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text(
+                            text = "Enter time in minutes and/or seconds:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -63,27 +72,28 @@ fun AddTimerDialog(
                 }
             }
         },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val minutes = customMinutes.toLongOrNull() ?: 0L
-                    val seconds = customSeconds.toLongOrNull() ?: 0L
-                    val duration = (minutes * 60 + seconds) * 1000L
-                    
-                    if (duration > 0) {
-                        onConfirm(duration)
-                        onDismiss()
+                        confirmButton = {
+                    Button(
+                        onClick = {
+                            val minutes = customMinutes.toLongOrNull() ?: 0L
+                            val seconds = customSeconds.toLongOrNull() ?: 0L
+                            val duration = (minutes * 60 + seconds) * 1000L
+                            val name = timerName.trim().takeIf { it.isNotBlank() }
+
+                            if (duration > 0) {
+                                onConfirm(name, duration)
+                                onDismiss()
+                            }
+                        },
+                        enabled = {
+                            val minutes = customMinutes.toLongOrNull() ?: 0L
+                            val seconds = customSeconds.toLongOrNull() ?: 0L
+                            (customMinutes.isNotBlank() || customSeconds.isNotBlank()) && (minutes > 0 || seconds > 0)
+                        }()
+                    ) {
+                        Text("Add Timer")
                     }
                 },
-                enabled = {
-                    val minutes = customMinutes.toLongOrNull() ?: 0L
-                    val seconds = customSeconds.toLongOrNull() ?: 0L
-                    (customMinutes.isNotBlank() || customSeconds.isNotBlank()) && (minutes > 0 || seconds > 0)
-                }()
-            ) {
-                Text("Add Timer")
-            }
-        },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
