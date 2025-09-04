@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [TimerGroup::class, Timer::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class TimerDatabase : RoomDatabase() {
@@ -71,15 +71,15 @@ abstract class TimerDatabase : RoomDatabase() {
             
             // Add sample timers only to Default group
             val defaultTimers = listOf(
-                Timer(name = "5 Seconds", duration = 5 * 1000L, groupId = defaultGroupId),
-                Timer(name = "30 Seconds", duration = 30 * 1000L, groupId = defaultGroupId),
-                Timer(name = "1 Minute", duration = 60 * 1000L, groupId = defaultGroupId)
+                Timer(name = null, duration = 5 * 1000L, groupId = defaultGroupId),
+                Timer(name = null, duration = 30 * 1000L, groupId = defaultGroupId),
+                Timer(name = null, duration = 60 * 1000L, groupId = defaultGroupId)
             )
             
             // Insert only default group timers
             defaultTimers.forEach { timer ->
                 val timerId = timerDao.insertTimer(timer)
-                android.util.Log.d("TimerDatabase", "Inserted timer: ${timer.name} with ID: $timerId, duration: ${timer.duration}")
+                android.util.Log.d("TimerDatabase", "Inserted timer: ${timer.getDisplayName()} with ID: $timerId, duration: ${timer.duration}")
             }
             
             android.util.Log.d("TimerDatabase", "Database population completed")

@@ -184,10 +184,10 @@ fun SmartTimerApp(timerService: TimerService?) {
         onAddGroup = { name, color ->
             mainViewModel.addTimerGroup(name, color)
         },
-        onAddTimer = { name, duration ->
+        onAddTimer = { duration ->
             if (timerGroups.isNotEmpty() && currentGroupIndex < timerGroups.size) {
                 val currentGroup = timerGroups[currentGroupIndex]
-                timerViewModel?.addTimer(name, duration, currentGroup.timerGroup.id)
+                timerViewModel?.addTimer(duration, currentGroup.timerGroup.id)
             }
         },
         onStartTimer = { timer ->
@@ -223,7 +223,6 @@ fun SmartTimerApp(timerService: TimerService?) {
         },
         formatTime = { milliseconds ->
             formatTime(milliseconds)
-        },
-        predefinedDurations = timerViewModel?.getPredefinedDurations() ?: emptyList()
+        }
     )
 }

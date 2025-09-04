@@ -28,9 +28,10 @@ class MainViewModel(private val repository: TimerRepository) : ViewModel() {
                     android.util.Log.d("MainViewModel", "Loaded ${groups.size} groups and ${timers.size} timers")
                     groups.map { group ->
                         val groupTimers = timers.filter { it.groupId == group.id }
+                            .sortedBy { it.duration } // Sort timers by duration
                         android.util.Log.d("MainViewModel", "Group ${group.name} has ${groupTimers.size} timers")
                         groupTimers.forEach { timer ->
-                            android.util.Log.d("MainViewModel", "Timer: ${timer.name}, duration: ${timer.duration}")
+                            android.util.Log.d("MainViewModel", "Timer: ${timer.getDisplayName()}, duration: ${timer.duration}")
                         }
                         TimerGroupWithTimers(
                             timerGroup = group,

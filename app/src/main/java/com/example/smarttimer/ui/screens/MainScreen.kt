@@ -24,14 +24,13 @@ fun MainScreen(
     currentGroupIndex: Int,
     activeTimers: Map<Long, Timer>,
     onAddGroup: (name: String, color: Int) -> Unit,
-    onAddTimer: (name: String, duration: Long) -> Unit,
+    onAddTimer: (duration: Long) -> Unit,
     onStartTimer: (Timer) -> Unit,
     onStopTimer: (Long) -> Unit,
     onDeleteTimer: (Timer) -> Unit,
     onDeleteGroup: (TimerGroupWithTimers) -> Unit,
     onGroupIndexChange: (Int) -> Unit,
     formatTime: (Long) -> String,
-    predefinedDurations: List<Pair<String, Long>>,
     modifier: Modifier = Modifier
 ) {
     var showAddGroupDialog by remember { mutableStateOf(false) }
@@ -146,7 +145,6 @@ fun MainScreen(
                     onDeleteTimer = onDeleteTimer,
                     onDeleteGroup = { onDeleteGroup(group) },
                     formatTime = formatTime,
-                    predefinedDurations = predefinedDurations,
                     modifier = Modifier.fillMaxSize()
                 )
             }

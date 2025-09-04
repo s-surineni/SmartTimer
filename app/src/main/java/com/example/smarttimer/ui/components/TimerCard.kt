@@ -45,7 +45,7 @@ fun TimerCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = timer.name,
+                    text = timer.getDisplayName(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)

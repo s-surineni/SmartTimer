@@ -40,10 +40,10 @@ class TimerViewModel(
         }
     }
     
-    fun addTimer(name: String, duration: Long, groupId: Long) {
+    fun addTimer(duration: Long, groupId: Long) {
         viewModelScope.launch {
             val newTimer = Timer(
-                name = name,
+                name = null, // No custom name, will use duration-based name
                 duration = duration,
                 groupId = groupId
             )
@@ -92,14 +92,4 @@ class TimerViewModel(
         }
     }
     
-    fun getPredefinedDurations(): List<Pair<String, Long>> {
-        return listOf(
-            "5 minutes" to (5 * 60 * 1000L),
-            "10 minutes" to (10 * 60 * 1000L),
-            "15 minutes" to (15 * 60 * 1000L),
-            "30 minutes" to (30 * 60 * 1000L),
-            "1 hour" to (60 * 60 * 1000L),
-            "2 hours" to (2 * 60 * 60 * 1000L)
-        )
-    }
 }
