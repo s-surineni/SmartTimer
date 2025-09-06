@@ -45,7 +45,6 @@ class TimerService : Service() {
         private const val ACTION_STOP_TIMER = "com.example.smarttimer.STOP_TIMER"
         private const val ACTION_DISMISS_NOTIFICATION = "com.example.smarttimer.DISMISS_NOTIFICATION"
         const val ACTION_STOP_ALL_TIMERS = "com.example.smarttimer.STOP_ALL_TIMERS"
-        private const val ACTION_STOP_SOUND = "com.example.smarttimer.STOP_SOUND"
     }
     
     inner class TimerBinder : Binder() {
@@ -85,11 +84,6 @@ class TimerService : Service() {
             }
             ACTION_DISMISS_NOTIFICATION -> {
                 android.util.Log.d("TimerService", "Dismiss notification action received")
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                notificationManager?.cancel(NOTIFICATION_ID + 1)
-            }
-            ACTION_STOP_SOUND -> {
-                android.util.Log.d("TimerService", "Stop sound action received")
                 stopAlarmSound()
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.cancel(NOTIFICATION_ID + 1)
@@ -409,15 +403,6 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            // Create stop sound intent
-            val stopSoundIntent = Intent(this, TimerService::class.java).apply {
-                action = ACTION_STOP_SOUND
-            }
-            val stopSoundPendingIntent = PendingIntent.getService(
-                this, 0, stopSoundIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setContentTitle("Timer Finished!")
                 .setContentText("${timer.getDisplayName()} has completed")
@@ -426,7 +411,6 @@ class TimerService : Service() {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
-                .addAction(android.R.drawable.ic_media_pause, "Stop Sound", stopSoundPendingIntent)
                 .addAction(R.drawable.ic_timer, "Stop Timer", stopPendingIntent)
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
                 .build()
