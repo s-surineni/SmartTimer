@@ -411,8 +411,11 @@ class TimerService : Service() {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
-                .addAction(R.drawable.ic_timer, "Stop Timer", stopPendingIntent)
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setShowWhen(true)
+                .setUsesChronometer(false)
+                .addAction(R.drawable.ic_stop, "Stop Timer", stopPendingIntent)
+                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
