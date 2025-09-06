@@ -36,6 +36,7 @@ class TimerService : Service() {
     val activeTimers: StateFlow<Map<Long, Timer>> = _activeTimers.asStateFlow()
     
     private val activeJobs = ConcurrentHashMap<Long, Job>()
+    private var currentRingtone: android.media.Ringtone? = null
     
     companion object {
         private const val NOTIFICATION_ID = 1
@@ -44,6 +45,7 @@ class TimerService : Service() {
         private const val ACTION_STOP_TIMER = "com.example.smarttimer.STOP_TIMER"
         private const val ACTION_DISMISS_NOTIFICATION = "com.example.smarttimer.DISMISS_NOTIFICATION"
         const val ACTION_STOP_ALL_TIMERS = "com.example.smarttimer.STOP_ALL_TIMERS"
+        private const val ACTION_STOP_SOUND = "com.example.smarttimer.STOP_SOUND"
     }
     
     inner class TimerBinder : Binder() {
@@ -86,12 +88,19 @@ class TimerService : Service() {
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.cancel(NOTIFICATION_ID + 1)
             }
+            ACTION_STOP_SOUND -> {
+                android.util.Log.d("TimerService", "Stop sound action received")
+                stopAlarmSound()
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                notificationManager?.cancel(NOTIFICATION_ID + 1)
+            }
         }
         return START_STICKY
     }
     
     override fun onDestroy() {
         super.onDestroy()
+        stopAlarmSound()
         serviceScope.cancel()
     }
     
@@ -335,10 +344,13 @@ class TimerService : Service() {
         try {
             android.util.Log.d("TimerService", "playTimerFinishedSound - using alarm sound")
             
+            // Stop any existing ringtone first
+            stopAlarmSound()
+            
             // Play alarm sound instead of notification sound
             val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            val ringtone = RingtoneManager.getRingtone(this, alarmUri)
-            ringtone?.play()
+            currentRingtone = RingtoneManager.getRingtone(this, alarmUri)
+            currentRingtone?.play()
             
             // Enhanced vibration pattern for alarm
             @Suppress("DEPRECATION")
@@ -352,6 +364,16 @@ class TimerService : Service() {
             }
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error playing timer finished sound", e)
+        }
+    }
+    
+    private fun stopAlarmSound() {
+        try {
+            android.util.Log.d("TimerService", "stopAlarmSound called")
+            currentRingtone?.stop()
+            currentRingtone = null
+        } catch (e: Exception) {
+            android.util.Log.e("TimerService", "Error stopping alarm sound", e)
         }
     }
     
@@ -387,6 +409,15 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
+            // Create stop sound intent
+            val stopSoundIntent = Intent(this, TimerService::class.java).apply {
+                action = ACTION_STOP_SOUND
+            }
+            val stopSoundPendingIntent = PendingIntent.getService(
+                this, 0, stopSoundIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setContentTitle("Timer Finished!")
                 .setContentText("${timer.getDisplayName()} has completed")
@@ -395,6 +426,7 @@ class TimerService : Service() {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .addAction(android.R.drawable.ic_media_pause, "Stop Sound", stopSoundPendingIntent)
                 .addAction(R.drawable.ic_timer, "Stop Timer", stopPendingIntent)
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
                 .build()
