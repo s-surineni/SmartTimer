@@ -220,6 +220,8 @@ class TimerService : Service() {
                 enableLights(true)
                 enableVibration(true)
                 setShowBadge(true)
+                // Set alarm sound for this channel
+                setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), null)
             }
             
             notificationManager.createNotificationChannel(serviceChannel)
@@ -331,21 +333,22 @@ class TimerService : Service() {
     
     private fun playTimerFinishedSound() {
         try {
-            android.util.Log.d("TimerService", "playTimerFinishedSound - using service context")
+            android.util.Log.d("TimerService", "playTimerFinishedSound - using alarm sound")
             
-            // Play default notification sound
-            val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(this, notificationUri)
+            // Play alarm sound instead of notification sound
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val ringtone = RingtoneManager.getRingtone(this, alarmUri)
             ringtone?.play()
             
-            // Vibrate
+            // Enhanced vibration pattern for alarm
             @Suppress("DEPRECATION")
             val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 200, 500), -1))
+                // More aggressive vibration pattern for alarm
+                vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 1000, 200, 1000, 200, 1000), -1))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 500, 200, 500), -1)
+                vibrator?.vibrate(longArrayOf(0, 1000, 200, 1000, 200, 1000), -1)
             }
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error playing timer finished sound", e)
