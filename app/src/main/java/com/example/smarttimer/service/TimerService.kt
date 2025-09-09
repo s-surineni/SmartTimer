@@ -178,6 +178,10 @@ class TimerService : Service() {
         // Stop alarm sound when timer is stopped
         stopAlarmSound()
         
+        // Cancel individual timer notification
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        notificationManager?.cancel(timerId.toInt() + 2000)
+        
         serviceScope.launch {
             try {
                 if (::timerRepository.isInitialized) {
@@ -269,59 +273,57 @@ class TimerService : Service() {
         activeTimers: Map<Long, Timer>,
         openAppPendingIntent: PendingIntent
     ): android.app.Notification {
-        val timerList = activeTimers.values.toList()
-        val primaryTimer = timerList.first()
-        val remainingTime = formatTime(primaryTimer.remainingTime)
+        // Create individual notifications for each timer
+        createIndividualTimerNotifications(activeTimers, openAppPendingIntent)
         
-        val contentText = if (timerList.size == 1) {
-            "${primaryTimer.getDisplayName()}: $remainingTime"
-        } else {
-            "${primaryTimer.getDisplayName()}: $remainingTime (+${timerList.size - 1} more)"
-        }
-        
-        // Create stop all timers action
-        val stopAllIntent = Intent(this, TimerService::class.java).apply {
-            action = ACTION_STOP_ALL_TIMERS
-        }
-        val stopAllPendingIntent = PendingIntent.getService(
-            this, 1, stopAllIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Timer Running")
-            .setContentText(contentText)
+        // Return a simple service notification
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Smart Timer")
+            .setContentText("${activeTimers.size} timers running")
             .setSmallIcon(R.drawable.ic_timer)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setShowWhen(false)
             .setContentIntent(openAppPendingIntent)
-            .addAction(
-                android.R.drawable.ic_menu_close_clear_cancel,
-                "✕",
-                stopAllPendingIntent
-            )
+            .build()
+    }
+    
+    private fun createIndividualTimerNotifications(
+        activeTimers: Map<Long, Timer>,
+        openAppPendingIntent: PendingIntent
+    ) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
-        // Add individual stop actions for up to 3 timers (Android notification limit)
-        val timersToShow = timerList.take(3)
-        timersToShow.forEach { timer ->
+        activeTimers.forEach { (timerId, timer) ->
+            val remainingTime = formatTime(timer.remainingTime)
+            
+            // Create stop timer action
             val stopTimerIntent = Intent(this, TimerService::class.java).apply {
                 action = ACTION_STOP_TIMER
-                putExtra("timer_id", timer.id)
+                putExtra("timer_id", timerId)
             }
             val stopTimerPendingIntent = PendingIntent.getService(
-                this, timer.id.toInt() + 1000, stopTimerIntent,
+                this, timerId.toInt() + 1000, stopTimerIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            builder.addAction(
-                R.drawable.ic_stop_timer,
-                "⏹",
-                stopTimerPendingIntent
-            )
+            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(timer.getDisplayName())
+                .setContentText("Time remaining: $remainingTime")
+                .setSmallIcon(R.drawable.ic_timer)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setShowWhen(false)
+                .setContentIntent(openAppPendingIntent)
+                .addAction(
+                    R.drawable.ic_stop_timer,
+                    "⏹",
+                    stopTimerPendingIntent
+                )
+                .build()
+            
+            // Use timer ID as notification ID to create separate notifications
+            notificationManager.notify(timerId.toInt() + 2000, notification)
         }
-        
-        return builder.build()
     }
     
     private fun updateNotification() {
@@ -330,6 +332,19 @@ class TimerService : Service() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             android.util.Log.d("TimerService", "Updating notification: ${notification.extras.getString("android.title")} - ${notification.extras.getString("android.text")}")
             notificationManager.notify(NOTIFICATION_ID, notification)
+            
+            // Also update individual timer notifications
+            val activeTimers = _activeTimers.value
+            if (activeTimers.isNotEmpty()) {
+                val openAppIntent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                val openAppPendingIntent = PendingIntent.getActivity(
+                    this, 0, openAppIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                createIndividualTimerNotifications(activeTimers, openAppPendingIntent)
+            }
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error updating notification", e)
         }
