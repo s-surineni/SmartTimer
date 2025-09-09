@@ -298,7 +298,7 @@ class TimerService : Service() {
             .setContentIntent(openAppPendingIntent)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "",
+                "Stop All",
                 stopAllPendingIntent
             )
         
@@ -316,7 +316,7 @@ class TimerService : Service() {
             
             builder.addAction(
                 R.drawable.ic_stop_timer,
-                "",
+                "Stop",
                 stopTimerPendingIntent
             )
         }
@@ -415,8 +415,8 @@ class TimerService : Service() {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setShowWhen(true)
                 .setUsesChronometer(false)
-                .addAction(R.drawable.ic_stop, "", stopPendingIntent)
-                .addAction(R.drawable.ic_dismiss, "", dismissPendingIntent)
+                .addAction(R.drawable.ic_stop, "Stop", stopPendingIntent)
+                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
