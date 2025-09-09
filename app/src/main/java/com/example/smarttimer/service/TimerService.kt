@@ -76,6 +76,9 @@ class TimerService : Service() {
                 android.util.Log.d("TimerService", "Stop timer action received for timer ID: $timerId")
                 if (timerId != -1L) {
                     stopTimer(timerId)
+                    // Also dismiss the timer finished notification if it exists
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    notificationManager?.cancel(NOTIFICATION_ID + 1)
                 }
             }
             ACTION_STOP_ALL_TIMERS -> {
@@ -171,6 +174,10 @@ class TimerService : Service() {
         android.util.Log.d("TimerService", "stopTimer called for timer ID: $timerId")
         activeJobs[timerId]?.cancel()
         activeJobs.remove(timerId)
+        
+        // Stop alarm sound when timer is stopped
+        stopAlarmSound()
+        
         serviceScope.launch {
             try {
                 if (::timerRepository.isInitialized) {
