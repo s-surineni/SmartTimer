@@ -13,6 +13,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Binder
 import android.os.Build
+import android.widget.RemoteViews
 import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -306,19 +307,21 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
+            // Create custom notification layout
+            val customView = RemoteViews(packageName, R.layout.notification_timer)
+            customView.setTextViewText(R.id.title, timer.getDisplayName())
+            customView.setTextViewText(R.id.text, "Time remaining: $remainingTime")
+            customView.setOnClickPendingIntent(R.id.stop_button, stopTimerPendingIntent)
+            
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(timer.getDisplayName())
-                .setContentText("Time remaining: $remainingTime")
                 .setSmallIcon(R.drawable.ic_timer)
+                .setCustomContentView(customView)
+                .setCustomBigContentView(customView)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setShowWhen(false)
                 .setContentIntent(openAppPendingIntent)
-                .addAction(
-                    R.drawable.ic_stop_timer,
-                    "⏹",
-                    stopTimerPendingIntent
-                )
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
             
             // Use timer ID as notification ID to create separate notifications
