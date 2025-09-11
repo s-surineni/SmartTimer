@@ -39,15 +39,15 @@
 
     <Button
         android:id="@+id/stop_button"
-        android:layout_width="wrap_content"
+        android:layout_width="48dp"
         android:layout_height="48dp"
-        android:text="⏹"
-        android:textSize="18sp"
+        android:drawableStart="@drawable/ic_stop_inline"
+        android:drawablePadding="0dp"
         android:background="@android:color/transparent"
-        android:textColor="@android:color/black"
-        android:minWidth="56dp"
+        android:minWidth="48dp"
         android:padding="12dp"
         android:gravity="center"
-        android:layout_gravity="center_vertical" />
+        android:layout_gravity="center_vertical"
+        android:contentDescription="Stop timer" />
 
 </LinearLayout>
