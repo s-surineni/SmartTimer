@@ -239,6 +239,7 @@ class TimerService : Service() {
                 enableLights(true)
                 enableVibration(true)
                 setShowBadge(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
                 // Set alarm sound for this channel
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), null)
             }
@@ -415,15 +416,10 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            // Create custom notification layout for completed timer
-            val customView = RemoteViews(packageName, R.layout.notification_timer)
-            customView.setTextViewText(R.id.time_remaining, "Timer Finished!")
-            customView.setOnClickPendingIntent(R.id.stop_button, dismissPendingIntent)
-            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
+                .setContentTitle("Timer Finished!")
+                .setContentText("${timer.getDisplayName()} has completed")
                 .setSmallIcon(R.drawable.ic_timer)
-                .setCustomContentView(customView)
-                .setCustomBigContentView(customView)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -431,7 +427,10 @@ class TimerService : Service() {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setShowWhen(true)
                 .setUsesChronometer(false)
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setFullScreenIntent(pendingIntent, true)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setOngoing(false)
+                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
