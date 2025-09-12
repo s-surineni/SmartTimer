@@ -353,7 +353,6 @@ class TimerService : Service() {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setShowWhen(false)
                 .setContentIntent(openAppPendingIntent)
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
             
             // Use timer ID as notification ID to create separate notifications
@@ -469,8 +468,8 @@ class TimerService : Service() {
             )
             
             // Create custom notification layout for timer finished
-            val customView = RemoteViews(packageName, R.layout.notification_timer)
-            customView.setTextViewText(R.id.time_remaining, "Timer Finished! ${timer.getDisplayName()}")
+            val customView = RemoteViews(packageName, R.layout.notification_timer_finished)
+            customView.setTextViewText(R.id.timer_text, "Timer Finished! ${timer.getDisplayName()}")
             customView.setOnClickPendingIntent(R.id.restart_button, restartPendingIntent)
             customView.setOnClickPendingIntent(R.id.dismiss_button, dismissPendingIntent)
             
@@ -487,7 +486,6 @@ class TimerService : Service() {
                 .setFullScreenIntent(dismissPendingIntent, true)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setOngoing(false)
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
