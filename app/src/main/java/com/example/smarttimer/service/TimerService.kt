@@ -1,5 +1,6 @@
 package com.example.smarttimer.service
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -269,6 +270,8 @@ class TimerService : Service() {
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Shows active timers"
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                setShowBadge(true)
             }
             
             // Timer finished channel with sound
@@ -322,6 +325,17 @@ class TimerService : Service() {
         return null
     }
     
+    private fun createPublicNotification(timer: Timer, remainingTime: String): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_timer)
+            .setContentTitle("Timer Running")
+            .setContentText("${timer.getDisplayName()}: $remainingTime")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setShowWhen(false)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+    }
+
     private fun createIndividualTimerNotifications(
         activeTimers: Map<Long, Timer>,
         openAppPendingIntent: PendingIntent
@@ -353,6 +367,8 @@ class TimerService : Service() {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setShowWhen(false)
                 .setContentIntent(openAppPendingIntent)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPublicVersion(createPublicNotification(timer, remainingTime))
                 .build()
             
             // Use timer ID as notification ID to create separate notifications
@@ -485,6 +501,15 @@ class TimerService : Service() {
                 .setLights(android.graphics.Color.RED, 1000, 1000)
                 .addAction(R.drawable.ic_restart, "Restart", restartPendingIntent)
                 .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
+                .setPublicVersion(
+                    NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_timer)
+                        .setContentTitle("Timer Finished!")
+                        .setContentText("${timer.getDisplayName()} has completed")
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                        .build()
+                )
                 .build()
             
             android.util.Log.d("TimerService", "Showing timer finished notification for timer: ${timer.getDisplayName()}")
