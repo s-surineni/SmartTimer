@@ -483,15 +483,10 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            // Create ultra-minimal custom notification layout
-            val customView = RemoteViews(packageName, R.layout.notification_timer_finished)
-            customView.setTextViewText(R.id.timer_text, "Timer Finished! ${timer.getDisplayName()}")
-            customView.setOnClickPendingIntent(R.id.restart_button, restartPendingIntent)
-            customView.setOnClickPendingIntent(R.id.dismiss_button, dismissPendingIntent)
-            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_timer)
-                .setCustomContentView(customView)
+                .setContentTitle("Timer Finished!")
+                .setContentText("${timer.getDisplayName()}")
                 .setContentIntent(dismissPendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -504,6 +499,7 @@ class TimerService : Service() {
                 .setOngoing(false)
                 .setVibrate(longArrayOf(0, 1000, 500, 1000))
                 .setLights(android.graphics.Color.RED, 1000, 1000)
+                .addAction(R.drawable.ic_restart, "Restart", restartPendingIntent)
                 .setPublicVersion(
                     NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_timer)
