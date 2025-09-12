@@ -44,6 +44,7 @@ class TimerService : Service() {
         private const val CHANNEL_ID = "timer_service_channel"
         private const val TIMER_FINISHED_CHANNEL_ID = "timer_finished_channel"
         private const val ACTION_STOP_TIMER = "com.example.smarttimer.STOP_TIMER"
+        private const val ACTION_START_TIMER = "com.example.smarttimer.START_TIMER"
         private const val ACTION_DISMISS_NOTIFICATION = "com.example.smarttimer.DISMISS_NOTIFICATION"
         const val ACTION_STOP_ALL_TIMERS = "com.example.smarttimer.STOP_ALL_TIMERS"
     }
@@ -85,6 +86,19 @@ class TimerService : Service() {
             ACTION_STOP_ALL_TIMERS -> {
                 android.util.Log.d("TimerService", "Stop all timers action received")
                 stopAllTimers()
+            }
+            ACTION_START_TIMER -> {
+                val timerId = intent.getLongExtra("timer_id", -1L)
+                android.util.Log.d("TimerService", "Start timer action received for timer ID: $timerId")
+                if (timerId != -1L) {
+                    // Stop alarm sound first
+                    stopAlarmSound()
+                    // Cancel the timer finished notification
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    notificationManager?.cancel(NOTIFICATION_ID + 1)
+                    // Start the timer again
+                    startTimer(timerId)
+                }
             }
             ACTION_DISMISS_NOTIFICATION -> {
                 android.util.Log.d("TimerService", "Dismiss notification action received")
@@ -177,6 +191,29 @@ class TimerService : Service() {
         activeJobs[timer.id] = job
         serviceScope.launch(Dispatchers.Main) {
             updateNotification()
+        }
+    }
+    
+    fun startTimer(timerId: Long) {
+        android.util.Log.d("TimerService", "startTimer called for timer ID: $timerId")
+        
+        serviceScope.launch {
+            try {
+                if (::timerRepository.isInitialized) {
+                    val timer = timerRepository.getTimerById(timerId)
+                    if (timer != null) {
+                        // Reset timer to original duration
+                        val resetTimer = timer.copy(remainingTime = timer.duration)
+                        timerRepository.updateTimer(resetTimer)
+                        
+                        // Start the timer
+                        startTimer(resetTimer)
+                        android.util.Log.d("TimerService", "Timer $timerId restarted successfully")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("TimerService", "Error starting timer $timerId", e)
+            }
         }
     }
     
@@ -422,6 +459,16 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
+            // Create restart intent
+            val restartIntent = Intent(this, TimerService::class.java).apply {
+                action = ACTION_START_TIMER
+                putExtra("timer_id", timer.id)
+            }
+            val restartPendingIntent = PendingIntent.getService(
+                this, timer.id.toInt() + 2000, restartIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setContentTitle("Timer Finished!")
                 .setContentText("${timer.getDisplayName()} has completed")
@@ -438,6 +485,8 @@ class TimerService : Service() {
                 .setOngoing(false)
                 .setStyle(NotificationCompat.BigTextStyle()
                     .bigText("${timer.getDisplayName()} has completed\n\nTap anywhere to dismiss and stop sound\n\nTimer: ${timer.getDisplayName()}\nDuration: ${formatTime(timer.duration)}"))
+                .addAction(R.drawable.ic_timer, "Restart", restartPendingIntent)
+                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

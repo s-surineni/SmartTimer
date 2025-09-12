@@ -19,6 +19,8 @@ class TimerRepository(private val timerDao: TimerDao) {
     
     fun getAllTimers(): Flow<List<Timer>> = timerDao.getAllTimers()
     
+    suspend fun getTimerById(timerId: Long): Timer? = timerDao.getTimerById(timerId)
+    
     suspend fun insertTimer(timer: Timer): Long = timerDao.insertTimer(timer)
     
     suspend fun updateTimer(timer: Timer) = timerDao.updateTimer(timer)

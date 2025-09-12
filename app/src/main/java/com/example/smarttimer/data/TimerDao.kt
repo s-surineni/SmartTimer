@@ -28,6 +28,9 @@ interface TimerDao {
     @Query("SELECT * FROM timers ORDER BY createdAt ASC")
     fun getAllTimers(): Flow<List<Timer>>
     
+    @Query("SELECT * FROM timers WHERE id = :timerId")
+    suspend fun getTimerById(timerId: Long): Timer?
+    
     @Insert
     suspend fun insertTimer(timer: Timer): Long
     
