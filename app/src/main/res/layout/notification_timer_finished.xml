@@ -3,45 +3,45 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="2dp"
+    android:padding="1dp"
     android:gravity="center_vertical"
-    android:minHeight="40dp">
+    android:minHeight="36dp">
 
     <TextView
         android:id="@+id/timer_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
         android:gravity="center_vertical"
-        android:padding="2dp"
+        android:padding="1dp"
         android:maxLines="1"
         android:ellipsize="end" />
 
     <Button
         android:id="@+id/restart_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:drawableStart="@drawable/ic_restart"
         android:drawablePadding="0dp"
         android:background="@android:color/transparent"
-        android:minWidth="32dp"
-        android:padding="4dp"
+        android:minWidth="28dp"
+        android:padding="2dp"
         android:gravity="center"
         android:layout_gravity="center_vertical"
         android:contentDescription="Restart timer" />
 
     <Button
         android:id="@+id/dismiss_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:drawableStart="@drawable/ic_dismiss"
         android:drawablePadding="0dp"
         android:background="@android:color/transparent"
-        android:minWidth="32dp"
-        android:padding="4dp"
+        android:minWidth="28dp"
+        android:padding="2dp"
         android:gravity="center"
         android:layout_gravity="center_vertical"
         android:contentDescription="Dismiss notification" />
