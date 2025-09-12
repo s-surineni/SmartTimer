@@ -349,7 +349,6 @@ class TimerService : Service() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_timer)
                 .setCustomContentView(customView)
-                .setCustomBigContentView(customView)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setShowWhen(false)
@@ -471,14 +470,13 @@ class TimerService : Service() {
             
             // Create custom notification layout for timer finished
             val customView = RemoteViews(packageName, R.layout.notification_timer)
-            customView.setTextViewText(R.id.time_remaining, "Timer Finished!\n${timer.getDisplayName()}")
+            customView.setTextViewText(R.id.time_remaining, "Timer Finished! ${timer.getDisplayName()}")
             customView.setOnClickPendingIntent(R.id.restart_button, restartPendingIntent)
             customView.setOnClickPendingIntent(R.id.dismiss_button, dismissPendingIntent)
             
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_timer)
                 .setCustomContentView(customView)
-                .setCustomBigContentView(customView)
                 .setContentIntent(dismissPendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
