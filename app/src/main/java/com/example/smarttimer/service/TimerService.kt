@@ -402,16 +402,6 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            // Create stop timer intent
-            val stopIntent = Intent(this, TimerService::class.java).apply {
-                action = ACTION_STOP_TIMER
-                putExtra("timer_id", timer.id)
-            }
-            val stopPendingIntent = PendingIntent.getService(
-                this, timer.id.toInt(), stopIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            
             // Create dismiss intent
             val dismissIntent = Intent(this, TimerService::class.java).apply {
                 action = ACTION_DISMISS_NOTIFICATION
@@ -421,10 +411,15 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
+            // Create custom notification layout for completed timer
+            val customView = RemoteViews(packageName, R.layout.notification_timer)
+            customView.setTextViewText(R.id.time_remaining, "Timer Finished!")
+            customView.setOnClickPendingIntent(R.id.stop_button, dismissPendingIntent)
+            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
-                .setContentTitle("Timer Finished!")
-                .setContentText("${timer.getDisplayName()} has completed")
                 .setSmallIcon(R.drawable.ic_timer)
+                .setCustomContentView(customView)
+                .setCustomBigContentView(customView)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -432,8 +427,7 @@ class TimerService : Service() {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setShowWhen(true)
                 .setUsesChronometer(false)
-                .addAction(R.drawable.ic_stop_inline, "Stop", stopPendingIntent)
-                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
