@@ -257,14 +257,8 @@ class TimerService : Service() {
         )
         
         return if (activeTimers.isEmpty()) {
-            // No active timers - show basic service notification
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Smart Timer")
-                .setContentText("No active timers")
-                .setSmallIcon(R.drawable.ic_timer)
-                .setOngoing(true)
-                .setContentIntent(openAppPendingIntent)
-                .build()
+            // No active timers - return null to hide notification
+            null
         } else {
             createActiveTimersNotification(activeTimers, openAppPendingIntent)
         }
@@ -330,23 +324,30 @@ class TimerService : Service() {
     
     private fun updateNotification() {
         try {
+            val activeTimers = _activeTimers.value
+            
+            if (activeTimers.isEmpty()) {
+                // No active timers - stop foreground service and hide notification
+                stopForeground(true)
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.cancel(NOTIFICATION_ID)
+                return
+            }
+            
             val notification = createNotification() ?: return
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             android.util.Log.d("TimerService", "Updating notification: ${notification.extras.getString("android.title")} - ${notification.extras.getString("android.text")}")
             notificationManager.notify(NOTIFICATION_ID, notification)
             
-            // Also update individual timer notifications
-            val activeTimers = _activeTimers.value
-            if (activeTimers.isNotEmpty()) {
-                val openAppIntent = Intent(this, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                }
-                val openAppPendingIntent = PendingIntent.getActivity(
-                    this, 0, openAppIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                createIndividualTimerNotifications(activeTimers, openAppPendingIntent)
+            // Update individual timer notifications
+            val openAppIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
+            val openAppPendingIntent = PendingIntent.getActivity(
+                this, 0, openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            createIndividualTimerNotifications(activeTimers, openAppPendingIntent)
         } catch (e: Exception) {
             android.util.Log.e("TimerService", "Error updating notification", e)
         }
