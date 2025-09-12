@@ -91,6 +91,11 @@ class TimerService : Service() {
                 stopAlarmSound()
                 val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 notificationManager?.cancel(NOTIFICATION_ID + 1)
+                
+                // Open the app
+                val launchIntent = Intent(this, MainActivity::class.java)
+                launchIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(launchIntent)
             }
         }
         return START_STICKY
@@ -398,11 +403,12 @@ class TimerService : Service() {
         try {
             android.util.Log.d("TimerService", "showTimerFinishedNotification - using service context")
             
-            // Create intent to open app
-            val intent = Intent(this, MainActivity::class.java).apply {
+            // Create intent to stop alarm sound and open app
+            val intent = Intent(this, TimerService::class.java).apply {
+                action = ACTION_DISMISS_NOTIFICATION
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
-            val pendingIntent = PendingIntent.getActivity(
+            val pendingIntent = PendingIntent.getService(
                 this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
