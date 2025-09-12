@@ -21,6 +21,19 @@
         android:id="@+id/stop_button"
         android:layout_width="48dp"
         android:layout_height="48dp"
+        android:drawableStart="@drawable/ic_stop_inline"
+        android:drawablePadding="0dp"
+        android:background="@android:color/transparent"
+        android:minWidth="48dp"
+        android:padding="12dp"
+        android:gravity="center"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="Stop timer" />
+
+    <Button
+        android:id="@+id/restart_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:drawableStart="@drawable/ic_restart"
         android:drawablePadding="0dp"
         android:background="@android:color/transparent"
@@ -29,5 +42,18 @@
         android:gravity="center"
         android:layout_gravity="center_vertical"
         android:contentDescription="Restart timer" />
+
+    <Button
+        android:id="@+id/dismiss_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:drawableStart="@drawable/ic_dismiss"
+        android:drawablePadding="0dp"
+        android:background="@android:color/transparent"
+        android:minWidth="48dp"
+        android:padding="12dp"
+        android:gravity="center"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="Dismiss notification" />
 
 </LinearLayout>
