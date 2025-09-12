@@ -433,8 +433,8 @@ class TimerService : Service() {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setShowWhen(true)
                 .setUsesChronometer(false)
-                .addAction(R.drawable.ic_stop, "⏹", stopPendingIntent)
-                .addAction(R.drawable.ic_dismiss, "✕", dismissPendingIntent)
+                .addAction(R.drawable.ic_stop_inline, "Stop", stopPendingIntent)
+                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
