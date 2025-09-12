@@ -424,7 +424,7 @@ class TimerService : Service() {
             
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
                 .setContentTitle("Timer Finished!")
-                .setContentText("${timer.getDisplayName()} has completed - Tap to dismiss")
+                .setContentText("${timer.getDisplayName()} has completed")
                 .setSmallIcon(R.drawable.ic_timer)
                 .setContentIntent(dismissPendingIntent)
                 .setAutoCancel(true)
@@ -437,7 +437,7 @@ class TimerService : Service() {
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setOngoing(false)
                 .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText("${timer.getDisplayName()} has completed\n\nTap anywhere to dismiss and stop sound"))
+                    .bigText("${timer.getDisplayName()} has completed\n\nTap anywhere to dismiss and stop sound\n\nTimer: ${timer.getDisplayName()}\nDuration: ${formatTime(timer.duration)}"))
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
