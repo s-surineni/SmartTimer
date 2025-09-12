@@ -309,8 +309,7 @@ class TimerService : Service() {
             
             // Create custom notification layout
             val customView = RemoteViews(packageName, R.layout.notification_timer)
-            customView.setTextViewText(R.id.title, timer.getDisplayName())
-            customView.setTextViewText(R.id.text, "Time remaining: $remainingTime")
+            customView.setTextViewText(R.id.time_remaining, remainingTime)
             customView.setOnClickPendingIntent(R.id.stop_button, stopTimerPendingIntent)
             
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
