@@ -149,6 +149,10 @@ class TimerService : Service() {
                         android.util.Log.d("TimerService", "On main thread, playing sound and notification")
                         playTimerFinishedSound()
                         showTimerFinishedNotification(timer)
+                        
+                        // Clear the individual timer notification
+                        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        notificationManager.cancel(timer.id.toInt() + 2000)
                     }
                 
                 // Update notification on main thread
