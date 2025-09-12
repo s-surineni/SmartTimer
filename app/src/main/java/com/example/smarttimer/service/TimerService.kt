@@ -469,10 +469,15 @@ class TimerService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
+            // Create custom notification layout for timer finished
+            val customView = RemoteViews(packageName, R.layout.notification_timer)
+            customView.setTextViewText(R.id.time_remaining, "Timer Finished!\n${timer.getDisplayName()}")
+            customView.setOnClickPendingIntent(R.id.stop_button, restartPendingIntent)
+            
             val notification = NotificationCompat.Builder(this, TIMER_FINISHED_CHANNEL_ID)
-                .setContentTitle("Timer Finished!")
-                .setContentText("${timer.getDisplayName()} has completed")
                 .setSmallIcon(R.drawable.ic_timer)
+                .setCustomContentView(customView)
+                .setCustomBigContentView(customView)
                 .setContentIntent(dismissPendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -483,10 +488,7 @@ class TimerService : Service() {
                 .setFullScreenIntent(dismissPendingIntent, true)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setOngoing(false)
-                .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText("${timer.getDisplayName()} has completed\n\nTap anywhere to dismiss and stop sound\n\nTimer: ${timer.getDisplayName()}\nDuration: ${formatTime(timer.duration)}"))
-                .addAction(R.drawable.ic_timer, "Restart", restartPendingIntent)
-                .addAction(R.drawable.ic_dismiss, "Dismiss", dismissPendingIntent)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -21,13 +21,13 @@
         android:id="@+id/stop_button"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:drawableStart="@drawable/ic_stop_inline"
+        android:drawableStart="@drawable/ic_restart"
         android:drawablePadding="0dp"
         android:background="@android:color/transparent"
         android:minWidth="48dp"
         android:padding="12dp"
         android:gravity="center"
         android:layout_gravity="center_vertical"
-        android:contentDescription="Stop timer" />
+        android:contentDescription="Restart timer" />
 
 </LinearLayout>
