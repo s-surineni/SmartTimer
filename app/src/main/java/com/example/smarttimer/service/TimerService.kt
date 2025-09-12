@@ -271,19 +271,12 @@ class TimerService : Service() {
     private fun createActiveTimersNotification(
         activeTimers: Map<Long, Timer>,
         openAppPendingIntent: PendingIntent
-    ): android.app.Notification {
+    ): android.app.Notification? {
         // Create individual notifications for each timer
         createIndividualTimerNotifications(activeTimers, openAppPendingIntent)
         
-        // Return a simple service notification
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Smart Timer")
-            .setContentText("${activeTimers.size} timers running")
-            .setSmallIcon(R.drawable.ic_timer)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setContentIntent(openAppPendingIntent)
-            .build()
+        // Return null - no main service notification needed
+        return null
     }
     
     private fun createIndividualTimerNotifications(
@@ -338,10 +331,16 @@ class TimerService : Service() {
                 return
             }
             
-            val notification = createNotification() ?: return
+            val notification = createNotification()
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            android.util.Log.d("TimerService", "Updating notification: ${notification.extras.getString("android.title")} - ${notification.extras.getString("android.text")}")
-            notificationManager.notify(NOTIFICATION_ID, notification)
+            
+            if (notification != null) {
+                android.util.Log.d("TimerService", "Updating notification: ${notification.extras.getString("android.title")} - ${notification.extras.getString("android.text")}")
+                notificationManager.notify(NOTIFICATION_ID, notification)
+            } else {
+                // No main service notification needed - only individual timer notifications
+                android.util.Log.d("TimerService", "No main service notification needed")
+            }
             
             // Update individual timer notifications
             val openAppIntent = Intent(this, MainActivity::class.java).apply {
